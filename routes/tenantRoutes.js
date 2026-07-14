@@ -92,6 +92,14 @@ router.put('/:slug/whatsapp-reminders/:id', staffAuth, reminderController.update
 router.delete('/:slug/whatsapp-reminders/:id', staffAuth, reminderController.deleteReminder);
 router.post('/:slug/whatsapp-reminders/:id/retry', staffAuth, reminderController.retryReminder);
 
+// ─── Clients ──────────────────────────────────────────────────────────────────
+const clientController = require('../controller/clientController');
+router.get('/:slug/clients', staffAuth, clientController.getAllClients);
+router.post('/:slug/clients/bulk', staffAuth, clientController.bulkCreateClients);
+router.post('/:slug/clients', staffAuth, clientController.createClient);
+router.put('/:slug/clients/:id', staffAuth, clientController.updateClient);
+router.delete('/:slug/clients/:id', staffAuth, clientController.deleteClient);
+
 // ─── Customer Groups ──────────────────────────────────────────────────────────
 const customerGroupController = require('../controller/customerGroupController');
 router.get('/:slug/customer-groups', staffAuth, customerGroupController.getAllGroups);
