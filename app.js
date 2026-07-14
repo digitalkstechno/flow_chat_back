@@ -2,6 +2,8 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 dotenv.config();
 connectDB();
+const dns = require("node:dns")
+dns.setServers(['1.1.1.1','8.8.8.8'])
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");

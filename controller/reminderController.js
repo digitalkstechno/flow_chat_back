@@ -56,9 +56,15 @@ exports.deleteReminder = async (req, res, next) => {
         const conn = await getTenantConnection(slug);
         const Reminder = getReminderModel(conn);
 
-        const deleted = await Reminder.findByIdAndDelete(id);
-        if (!deleted) {
+        const target = await Reminder.findById(id);
+        if (!target) {
             return res.status(404).json({ success: false, message: 'Reminder not found' });
+        }
+
+        if (target.campaignId) {
+            await Reminder.deleteMany({ campaignId: target.campaignId });
+        } else {
+            await Reminder.findByIdAndDelete(id);
         }
 
         res.status(200).json({ success: true, message: 'Reminder deleted' });
@@ -73,8 +79,8 @@ exports.retryReminder = async (req, res, next) => {
         const conn = await getTenantConnection(slug);
         const Reminder = getReminderModel(conn);
 
-        const reminder = await Reminder.findById(id);
-        if (!reminder) {
+        const target = await Reminder.findById(id);
+        if (!target) {
             return res.status(404).json({ success: false, message: 'Reminder not found' });
         }
 
@@ -85,16 +91,35 @@ exports.retryReminder = async (req, res, next) => {
         }
 
         const { sendSingleReminderImmediately } = require('../utils/scheduler');
-        const sendRes = await sendSingleReminderImmediately(tenant, reminder);
 
-        if (sendRes.success) {
-            reminder.status = 'Sent';
-            await reminder.save();
-            res.status(200).json({ success: true, message: 'Reminder sent successfully' });
+        if (target.campaignId) {
+            const failedReminders = await Reminder.find({ campaignId: target.campaignId, status: 'Failed' });
+            if (failedReminders.length === 0) {
+                failedReminders.push(target);
+            }
+            let successCount = 0;
+            for (const r of failedReminders) {
+                const sendRes = await sendSingleReminderImmediately(tenant, r);
+                if (sendRes.success) {
+                    r.status = 'Sent';
+                    successCount++;
+                } else {
+                    r.status = 'Failed';
+                }
+                await r.save();
+            }
+            return res.status(200).json({ success: true, message: `Retried ${failedReminders.length} messages, ${successCount} sent successfully.` });
         } else {
-            reminder.status = 'Failed';
-            await reminder.save();
-            res.status(500).json({ success: false, message: sendRes.error || 'Failed to send reminder' });
+            const sendRes = await sendSingleReminderImmediately(tenant, target);
+            if (sendRes.success) {
+                target.status = 'Sent';
+                await target.save();
+                res.status(200).json({ success: true, message: 'Reminder sent successfully' });
+            } else {
+                target.status = 'Failed';
+                await target.save();
+                res.status(500).json({ success: false, message: sendRes.error || 'Failed to send reminder' });
+            }
         }
     } catch (error) {
         next(error);

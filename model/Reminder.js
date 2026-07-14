@@ -8,6 +8,7 @@ const reminderSchema = new mongoose.Schema(
         newName: { type: String },
         newPhone: { type: String },
         groupName: { type: String },
+        campaignId: { type: String },
         templateName: { type: String, required: true },
         languageCode: { type: String, default: 'en_US' },
         parameters: [{ type: String }],

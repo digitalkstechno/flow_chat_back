@@ -8,6 +8,7 @@ exports.getAllClients = async (req, res, next) => {
         const { slug } = req.params;
         const conn = await getTenantConnection(slug);
         const Client = getClientModel(conn);
+        const CustomerGroup = getCustomerGroupModel(conn); // register schema for populate
 
         const clients = await Client.find()
             .populate('group', 'name color')
@@ -32,6 +33,7 @@ exports.createClient = async (req, res, next) => {
 
         const conn = await getTenantConnection(slug);
         const Client = getClientModel(conn);
+        const CustomerGroup = getCustomerGroupModel(conn); // register schema for populate
 
         // Check for duplicate phone
         const existing = await Client.findOne({ phone });
@@ -64,6 +66,7 @@ exports.updateClient = async (req, res, next) => {
 
         const conn = await getTenantConnection(slug);
         const Client = getClientModel(conn);
+        const CustomerGroup = getCustomerGroupModel(conn); // register schema for populate
 
         // Check phone uniqueness (excluding current client)
         if (phone) {
